@@ -133,8 +133,9 @@ impl<'a, B: BufMut> Serializer for &'a mut RowBinarySerializer<B> {
 
     #[inline]
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq> {
-        let len = len.ok_or(Error::SequenceMustHaveLength)?;
-        put_unsigned_leb128(&mut self.buffer, len as u64);
+        if let Some(len) = len {
+            put_unsigned_leb128(&mut self.buffer, len as u64);
+        }
         Ok(self)
     }
 

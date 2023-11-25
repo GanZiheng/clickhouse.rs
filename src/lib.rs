@@ -176,6 +176,14 @@ impl Client {
         insert::Insert::new(self, table)
     }
 
+    pub fn insert_with_column_names<T: Row>(
+        &self,
+        table: &str,
+        column_names: Vec<&str>,
+    ) -> Result<insert::Insert<T>> {
+        insert::Insert::new_with_column_names(self, table, column_names)
+    }
+
     /// Creates an inserter to perform multiple INSERTs.
     pub fn inserter<T: Row>(&self, table: &str) -> Result<inserter::Inserter<T>> {
         inserter::Inserter::new(self, table)

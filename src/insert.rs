@@ -12,7 +12,7 @@ use url::Url;
 use crate::{
     error::{Error, Result},
     response::Response,
-    row::{self, Row},
+    row::{self, do_join_column_names, Row},
     rowbinary, Client, Compression,
 };
 
@@ -55,10 +55,7 @@ macro_rules! timeout {
 }
 
 impl<T> Insert<T> {
-    pub(crate) fn new(client: &Client, table: &str) -> Result<Self>
-    where
-        T: Row,
-    {
+    fn do_new(client: &Client, table: &str, fields: &str) -> Result<Self> {
         let mut url = Url::parse(&client.url).map_err(|err| Error::InvalidParams(err.into()))?;
         let mut pairs = url.query_pairs_mut();
         pairs.clear();
@@ -66,9 +63,6 @@ impl<T> Insert<T> {
         if let Some(database) = &client.database {
             pairs.append_pair("database", database);
         }
-
-        let fields = row::join_column_names::<T>()
-            .expect("the row type must be a struct or a wrapper around it");
 
         // TODO: what about escaping a table name?
         // https://clickhouse.yandex/docs/en/query_language/syntax/#syntax-identifiers
@@ -116,6 +110,27 @@ impl<T> Insert<T> {
             handle,
             _marker: PhantomData,
         })
+    }
+
+    pub(crate) fn new(client: &Client, table: &str) -> Result<Self>
+    where
+        T: Row,
+    {
+        let fields = row::join_column_names::<T>()
+            .expect("the row type must be a struct or a wrapper around it");
+        Self::do_new(client, table, &fields)
+    }
+
+    pub(crate) fn new_with_column_names(
+        client: &Client,
+        table: &str,
+        column_names: Vec<&str>,
+    ) -> Result<Self>
+    where
+        T: Row,
+    {
+        let fields = do_join_column_names(&column_names);
+        Self::do_new(client, table, &fields)
     }
 
     /// Sets timeouts for different operations.

@@ -59,7 +59,11 @@ pub(crate) fn join_column_names<R: Row>() -> Option<String> {
         return None;
     }
 
-    let out = R::COLUMN_NAMES
+    Some(do_join_column_names(R::COLUMN_NAMES))
+}
+
+pub(crate) fn do_join_column_names(column_names: &[&str]) -> String {
+    column_names
         .iter()
         .enumerate()
         .fold(String::new(), |mut res, (idx, name)| {
@@ -68,9 +72,7 @@ pub(crate) fn join_column_names<R: Row>() -> Option<String> {
             }
             sql::escape::identifier(name, &mut res).expect("impossible");
             res
-        });
-
-    Some(out)
+        })
 }
 
 #[cfg(test)]
